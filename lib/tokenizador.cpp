@@ -99,23 +99,38 @@ string Tokenizador::pasarAMinuscSinAcentos (const string& str) const{
 
 // Se considera delimitador cualquier caracter en delimiters, el espacio en blanco (solo cuando casosEspeciales esté a true) y el salto de línea (\n ó \r) (aunque casosEspeciales esté a false)
 bool Tokenizador::esDelimitador (const char& c) const {
-    if (casosEspeciales && isspace(static_cast<unsigned char>(c))) {
+    unsigned char uc = static_cast<unsigned char>(c);
+    if (casosEspeciales && isspace(uc)) {
         return true;
     }
     if (c == '\n' || c == '\r') {
         return true;
     }
-    if (delimiters.find(c) != string::npos) {
-        return true;
+    return esDelimitadorArray[uc];
+}
+
+void Tokenizador::reconstruirTablaDelimitadores() {
+    esDelimitadorArray.fill(false);
+    for (unsigned char c : delimiters) {
+        esDelimitadorArray[c] = true;
     }
-    return false;
 }
 
 // URLs 
 bool Tokenizador::esDelimitadorCortadorURL (const char& c) const {
-    string caracteresPermitidosURL = "-_.:/?&=#@";
+    // string caracteresPermitidosURL = "-_.:/?&=#@";
+    unsigned char uc = static_cast<unsigned char>(c);
+    static const array<bool, 256> permitidosURLArray = []() {
+        array<bool, 256> arr{};
+        arr.fill(false);
+        const char* p = "-_.:/?&=#@";
+        for (const unsigned char* q = reinterpret_cast<const unsigned char*>(p); *q; ++q) {
+            arr[*q] = true;
+        }
+        return arr;
+    }();
     
-    if (esDelimitador(c) && caracteresPermitidosURL.find(c) == string::npos) {
+    if (esDelimitador(c) && !permitidosURLArray[uc]) {
         return true;
     }
     return false;
@@ -163,23 +178,18 @@ size_t Tokenizador::procesarURL (const string& s, size_t start, size_t end, list
 
 // Números decimales
 bool Tokenizador::esNumeroDecimal (const string& s, size_t start, size_t end) const {
-    // cout << "Comprobando si es número decimal en posición " << start << " con punto/coma en posición " << end << ": " << s.substr(start, end - start) << endl << endl;
     bool hayPuntoOComa = false;
-    if (delimiters.find('.') == string::npos && delimiters.find(',') == string::npos) {
-        // cout << "No se han definido '.' ni ',' como delimitadores, por lo que no se considerará número decimal" << endl << endl;
+    if (!esDelimitadorArray[static_cast<unsigned char>('.')] && !esDelimitadorArray[static_cast<unsigned char>(',')]) {
         return false;
     }
     if ((s[end] != '.' && s[end] != ',')) {
-        // cout << "El carácter en posición " << end << " no es un punto ni una coma" << endl << endl;
         if ((s[start - 1] != '.' && s[start - 1] != ',')) {
-            // cout << "El carácter antes del número tampoco es un punto ni una coma, por lo que no se considerará número decimal" << endl << endl;
             return false;
         } else {
             hayPuntoOComa = true;
         }
     } else {
         if (end + 1 >= s.size() || !isdigit(static_cast<unsigned char>(s[end + 1]))) {
-            // cout << "El carácter después del punto/coma no es un dígito" << endl << endl;
             return false;
         }
     }
@@ -212,8 +222,8 @@ size_t Tokenizador::procesarNumeroDecimal (const string& s, size_t start, size_t
     size_t i = start;
     string token = "";
 
-    // cout << "Procesando número decimal desde posición " << start << " con punto/coma en posición " << end << endl;
-    // cout << "Caracter antes del número: '" << (start > 0 ? s[start - 1] : ' ') << "'" << endl;
+    // cout << "Procesando número decimal desde posición " << start << " con punto/coma en posición " << end << "\n";
+    // cout << "Caracter antes del número: '" << (start > 0 ? s[start - 1] : ' ') << "'" << "\n";
     if (s[i - 1] == '.'){
         token += "0.";
     } else if (s[i - 1] == ',') {
@@ -267,7 +277,7 @@ size_t Tokenizador::procesarNumeroDecimal (const string& s, size_t start, size_t
 
 // E-mails
 bool Tokenizador::esEmail (const string& s, size_t start, size_t end) const {
-    if (delimiters.find('@') == string::npos) {
+    if (!esDelimitadorArray[static_cast<unsigned char>('@')]) {
         return false;
     }
     if (end >= s.size() || s[end] != '@') {
@@ -333,7 +343,7 @@ size_t Tokenizador::procesarEmail (const string& s, size_t start, size_t end, li
 
 // Acrónimos
 bool Tokenizador::esAcronimo (const string& s, size_t start, size_t end) const {
-    if (delimiters.find('.') == string::npos) {
+    if (!esDelimitadorArray[static_cast<unsigned char>('.')]) {
         return false;
     }
     if (end >= s.size() || s[end] != '.') {
@@ -399,7 +409,7 @@ size_t Tokenizador::procesarAcronimo (const string& s, size_t start, size_t end,
 
 // Multipalabras
 bool Tokenizador::esGuionMultipalabra (const string& s, size_t start, size_t end) const {
-    if (delimiters.find('-') == string::npos) {
+    if (!esDelimitadorArray[static_cast<unsigned char>('-')]) {
         return false;
     }
     if (end >= s.size() || s[end] != '-') {
@@ -450,6 +460,8 @@ Tokenizador::Tokenizador(const string& delimitadoresPalabra, const bool& kcasosE
     delimiters = filtrarDelimitadoresRepetidos(delimitadoresPalabra);
     casosEspeciales = kcasosEspeciales;
     pasarAminuscSinAcentos = minuscSinAcentos;
+
+    reconstruirTablaDelimitadores();
 }
 
 Tokenizador::Tokenizador (const Tokenizador& t) {
@@ -461,6 +473,7 @@ Tokenizador::Tokenizador(){
     //_:/.?&-=#@
     casosEspeciales = true;
     pasarAminuscSinAcentos = false;
+    reconstruirTablaDelimitadores();
 }
 
 Tokenizador::~Tokenizador (){
@@ -472,6 +485,7 @@ Tokenizador& Tokenizador::operator= (const Tokenizador& t){
         delimiters = t.delimiters;
         casosEspeciales = t.casosEspeciales;
         pasarAminuscSinAcentos = t.pasarAminuscSinAcentos;
+        esDelimitadorArray = t.esDelimitadorArray;
     }
     return *this;
 }
@@ -515,27 +529,27 @@ void Tokenizador::Tokenizar (const string& str, list<string>& tokens) const {
                 }
 
                 if (esURL(s, start, i)) {
-                    // cout << "Detectada URL en posición " << start << ": " << s.substr(start, i - start) << endl << endl;
+                    // cout << "Detectada URL en posición " << start << ": " << s.substr(start, i - start) << "\n" << "\n";
                     i = procesarURL(s, start, i, tokens);
                     casoEspecialEncontrado = true;
                 }
                 else if (esNumeroDecimal(s, start, i)) {
-                    // cout << "Detectado número decimal en posición " << start << ": " << s.substr(start, i - start) << endl << endl;
+                    // cout << "Detectado número decimal en posición " << start << ": " << s.substr(start, i - start) << "\n" << "\n";
                     i = procesarNumeroDecimal(s, start, i, tokens);
                     casoEspecialEncontrado = true;
                 }
                 else if (esEmail(s, start, i)) {
-                    // cout << "Detectado email en posición " << start << ": " << s.substr(start, i - start) << endl << endl;
+                    // cout << "Detectado email en posición " << start << ": " << s.substr(start, i - start) << "\n" << "\n";
                     i = procesarEmail(s, start, i, tokens);
                     casoEspecialEncontrado = true;
                 }
                 else if (esAcronimo(s, start, i)) {
-                    // cout << "Detectado acrónimo en posición " << start << ": " << s.substr(start, i - start) << endl << endl;
+                    // cout << "Detectado acrónimo en posición " << start << ": " << s.substr(start, i - start) << "\n" << "\n";
                     i = procesarAcronimo(s, start, i, tokens);
                     casoEspecialEncontrado = true;
                 }
                 else if (esGuionMultipalabra(s, start, i)) {
-                    // cout << "Detectada palabra con guion en posición " << start << ": " << s.substr(start, i - start) << endl << endl;
+                    // cout << "Detectada palabra con guion en posición " << start << ": " << s.substr(start, i - start) << "\n" << "\n";
                     i = procesarGuionMultipalabra(s, start, i, tokens);
                     casoEspecialEncontrado = true;
                 }
@@ -563,7 +577,7 @@ bool Tokenizador::Tokenizar (const string& i, const string& f) const {
     list<string> tokens;
 
     if(!entrada) { 
-        cerr << "ERROR: No existe el archivo: " << i << endl; 
+        cerr << "ERROR: No existe el archivo: " << i << "\n";
         return false; 
     } else { 
         while(getline(entrada, cadena)) {  
@@ -576,13 +590,13 @@ bool Tokenizador::Tokenizar (const string& i, const string& f) const {
     entrada.close(); 
     
     if(!salida) { 
-        cerr << "ERROR: No se ha podido crear el archivo: " << f << endl; 
+        cerr << "ERROR: No se ha podido crear el archivo: " << f << "\n";
         return false; 
     }
     list<string>::iterator itS; 
 
     for(itS= tokens.begin(); itS!= tokens.end(); itS++) {   
-        salida << (*itS) << endl; 
+        salida << (*itS) << "\n"; 
     } 
 
     salida.close(); 
@@ -601,11 +615,12 @@ bool Tokenizador::TokenizarListaFicheros (const string& i) const {
     bool exito = true;
 
     if(!entrada) { 
-        cerr << "ERROR: No existe el archivo: " << i << endl; 
+        cerr << "ERROR: No existe el archivo: " << i << "\n"; 
         return false; 
     } 
     
-    vector<char> buffer(1 << 20);
+    // 64KB
+    vector<char> buffer(64 * 1024);
     // Se le reserva el doble del tamaño del buffer para evitar realocaciones   
     string carry;
     carry.reserve(buffer.size() * 2);
@@ -613,7 +628,7 @@ bool Tokenizador::TokenizarListaFicheros (const string& i) const {
     // Funcion lambda para procesar cada línea
     // [&] -> Permite modificar la variable exito del ámbito externo
     auto procesarLinea = [&](string& nombreFichero) {
-        // cout << "Procesando fichero: " << nombreFichero << endl;
+        // cout << "Procesando fichero: " << nombreFichero << "\n";
         if (nombreFichero.empty()) {
             return;
         }
@@ -630,11 +645,11 @@ bool Tokenizador::TokenizarListaFicheros (const string& i) const {
         int err = stat(nombreFichero.c_str(), &info);
 
         if (err == -1) {
-            cerr << "ERROR: No existe el archivo: " << nombreFichero << endl;
+            cerr << "ERROR: No existe el archivo: " << nombreFichero << "\n";
             exito = false; 
         }
         else if (S_ISDIR(info.st_mode)) {
-            cerr << "ERROR: Es un directorio: " << nombreFichero << endl;
+            cerr << "ERROR: Es un directorio: " << nombreFichero << "\n";
             exito = false; 
         }
         else {
@@ -665,7 +680,7 @@ bool Tokenizador::TokenizarListaFicheros (const string& i) const {
 
             string nombreFichero = carry.substr(start, pos - start);
             procesarLinea(nombreFichero);
-            // cout << "Línea procesada: " << nombreFichero << endl;
+            // cout << "Línea procesada: " << nombreFichero << "\n";
             start = pos + 1;
         }
     }
@@ -683,11 +698,11 @@ bool Tokenizador::TokenizarListaFicheros (const string& i) const {
     //     int err = stat(nombreFichero.c_str(), &info);
 
     //     if (err == -1) {
-    //         cerr << "ERROR: No existe el archivo: " << nombreFichero << endl;
+    //         cerr << "ERROR: No existe el archivo: " << nombreFichero << "\n";
     //         exito = false; 
     //     }
     //     else if (S_ISDIR(info.st_mode)) {
-    //         cerr << "ERROR: Es un directorio: " << nombreFichero << endl;
+    //         cerr << "ERROR: Es un directorio: " << nombreFichero << "\n";
     //         exito = false; 
     //     }
     //     else {
@@ -718,10 +733,12 @@ bool Tokenizador::TokenizarDirectorio (const string& i) const {
 
 void Tokenizador::DelimitadoresPalabra(const string& nuevoDelimiters) {
     delimiters = filtrarDelimitadoresRepetidos(nuevoDelimiters);
+    reconstruirTablaDelimitadores();
 }
 
 void Tokenizador::AnyadirDelimitadoresPalabra(const string& nuevoDelimiters) {
     delimiters = filtrarDelimitadoresRepetidos(delimiters + nuevoDelimiters);
+    reconstruirTablaDelimitadores();
 }
 
 string Tokenizador::DelimitadoresPalabra() const {

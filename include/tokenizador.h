@@ -3,6 +3,7 @@
 #include <iostream>
 #include <list>
 #include <ostream>
+#include <array>
 
 using namespace std;
 
@@ -79,6 +80,12 @@ class Tokenizador {
 
         // M�todo que indica si un caracter es delimitador
         bool esDelimitador (const char& c) const;
+
+        // Array de booleanos para indicar si un caracter es delimitador
+        array<bool, 256> esDelimitadorArray; 
+
+        // Reconstruye esDelimitadorArray a partir del string delimiters
+        void reconstruirTablaDelimitadores();
 
         // M�todos para detectar y procesar casos especiales
         bool esURL (const string& s, size_t start, size_t end) const;
