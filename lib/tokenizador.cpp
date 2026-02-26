@@ -100,7 +100,7 @@ string Tokenizador::pasarAMinuscSinAcentos (const string& str) const{
 // Se considera delimitador cualquier caracter en delimiters, el espacio en blanco (solo cuando casosEspeciales esté a true) y el salto de línea (\n ó \r) (aunque casosEspeciales esté a false)
 bool Tokenizador::esDelimitador (const char& c) const {
     unsigned char uc = static_cast<unsigned char>(c);
-    if (casosEspeciales && isspace(uc)) {
+    if (casosEspeciales && esSpaceArray[uc]) {
         return true;
     }
     if (c == '\n' || c == '\r') {
@@ -114,6 +114,22 @@ void Tokenizador::reconstruirTablaDelimitadores() {
     for (unsigned char c : delimiters) {
         esDelimitadorArray[c] = true;
     }
+}
+
+void Tokenizador::reconstruirTablasAuxiliares() {
+    esDigitArray.fill(false);
+    esSpaceArray.fill(false);
+
+    for (unsigned char c = '0'; c <= '9'; ++c)
+        esDigitArray[c] = true;
+
+    // Espacios clásicos ASCII
+    esSpaceArray[' ']  = true;
+    esSpaceArray['\t'] = true;
+    esSpaceArray['\n'] = true;
+    esSpaceArray['\r'] = true;
+    esSpaceArray['\v'] = true;
+    esSpaceArray['\f'] = true;
 }
 
 // URLs 
@@ -183,13 +199,16 @@ bool Tokenizador::esNumeroDecimal (const string& s, size_t start, size_t end) co
         return false;
     }
     if ((s[end] != '.' && s[end] != ',')) {
+        if (start == 0) {
+            return false;
+        }
         if ((s[start - 1] != '.' && s[start - 1] != ',')) {
             return false;
         } else {
             hayPuntoOComa = true;
         }
     } else {
-        if (end + 1 >= s.size() || !isdigit(static_cast<unsigned char>(s[end + 1]))) {
+        if (end + 1 >= s.size() || !esDigitArray[static_cast<unsigned char>(s[end + 1])]) {
             return false;
         }
     }
@@ -198,7 +217,7 @@ bool Tokenizador::esNumeroDecimal (const string& s, size_t start, size_t end) co
     char ultimoCaracter = '\0';
     for (size_t i = start; i < s.size(); ++i) {
         char c = s[i];
-        if (isdigit(static_cast<unsigned char>(c))) {
+        if (esDigitArray[static_cast<unsigned char>(c)]) {
             ultimoCaracter = c;
             continue;
         }
@@ -224,17 +243,19 @@ size_t Tokenizador::procesarNumeroDecimal (const string& s, size_t start, size_t
 
     // cout << "Procesando número decimal desde posición " << start << " con punto/coma en posición " << end << "\n";
     // cout << "Caracter antes del número: '" << (start > 0 ? s[start - 1] : ' ') << "'" << "\n";
-    if (s[i - 1] == '.'){
-        token += "0.";
-    } else if (s[i - 1] == ',') {
-        token += "0,";
+    if (i > 0) {
+        if (s[i - 1] == '.'){
+            token += "0.";
+        } else if (s[i - 1] == ',') {
+            token += "0,";
+        }
     }
 
     char ultimoCaracter = '\0';
     while (i < s.size()) {
         char c = s[i];
         
-        if (isdigit(static_cast<unsigned char>(c))) {
+        if (esDigitArray[static_cast<unsigned char>(c)]) {
             ultimoCaracter = c;
             ++i;
             continue;
@@ -245,7 +266,7 @@ size_t Tokenizador::procesarNumeroDecimal (const string& s, size_t start, size_t
                 break;
             }
             
-            if (i + 1 >= s.size() || !isdigit(static_cast<unsigned char>(s[i + 1]))) {
+            if (i + 1 >= s.size() || !esDigitArray[static_cast<unsigned char>(s[i + 1])]) {
                 break;  // No incluir este punto/coma
             }
             
@@ -255,7 +276,7 @@ size_t Tokenizador::procesarNumeroDecimal (const string& s, size_t start, size_t
         }
         
         if (c == '%' || c == '$') {
-            if (i + 1 >= s.size() || isspace(static_cast<unsigned char>(s[i + 1]))) {
+            if (i + 1 >= s.size() || esSpaceArray[static_cast<unsigned char>(s[i + 1])]) {
                 break;
             }
         }
@@ -462,6 +483,7 @@ Tokenizador::Tokenizador(const string& delimitadoresPalabra, const bool& kcasosE
     pasarAminuscSinAcentos = minuscSinAcentos;
 
     reconstruirTablaDelimitadores();
+    reconstruirTablasAuxiliares();
 }
 
 Tokenizador::Tokenizador (const Tokenizador& t) {
@@ -474,6 +496,7 @@ Tokenizador::Tokenizador(){
     casosEspeciales = true;
     pasarAminuscSinAcentos = false;
     reconstruirTablaDelimitadores();
+    reconstruirTablasAuxiliares();
 }
 
 Tokenizador::~Tokenizador (){
@@ -619,8 +642,8 @@ bool Tokenizador::TokenizarListaFicheros (const string& i) const {
         return false; 
     } 
     
-    // 64KB
-    vector<char> buffer(64 * 1024);
+    // 32KB
+    vector<char> buffer(8 * 1024);
     // Se le reserva el doble del tamaño del buffer para evitar realocaciones   
     string carry;
     carry.reserve(buffer.size() * 2);

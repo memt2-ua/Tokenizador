@@ -83,9 +83,13 @@ class Tokenizador {
 
         // Array de booleanos para indicar si un caracter es delimitador
         array<bool, 256> esDelimitadorArray; 
+        array<bool,256> esDigitArray;
+        array<bool,256> esSpaceArray;
 
         // Reconstruye esDelimitadorArray a partir del string delimiters
         void reconstruirTablaDelimitadores();
+
+        void reconstruirTablasAuxiliares();
 
         // M�todos para detectar y procesar casos especiales
         bool esURL (const string& s, size_t start, size_t end) const;
