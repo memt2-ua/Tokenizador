@@ -7414,7 +7414,7 @@ la
 medula
 osea
 p=0
-0186
+0,0186
 este
 hallazgo
 no
@@ -8757,7 +8757,7 @@ mabthera
 versus
 observacion
 p=0
-0039
+0,0039
 log-rank
 test
 el
@@ -8960,7 +8960,7 @@ vs
 22,1
 meses
 p=0
-0071
+0,0071
 aunque
 los
 subgrupos
@@ -9198,7 +9198,7 @@ nuevo
 tratamiento
 anti-linfoma
 p=0
-0001
+0,0001
 la
 estimacion
 de
@@ -9304,7 +9304,7 @@ sobre
 el
 chop
 p=0
-0071
+0,0071
 lo
 cual
 representa
@@ -9378,7 +9378,7 @@ grupo
 con
 chop
 p=0
-0028
+0,0028
 el
 riesgo
 de

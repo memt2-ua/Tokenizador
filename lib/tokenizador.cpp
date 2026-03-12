@@ -2,7 +2,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fstream>
-#include <cctype>
 #include <vector>
 #include <string_view>
 
@@ -22,145 +21,55 @@ string Tokenizador::filtrarDelimitadoresRepetidos (const string& delimitadoresPa
 
 // Método que pasa a minúsculas y quita acentos (ISO-8859-1)
 // Cada caracter ocupa un byte en ISO-8859-1
-// string Tokenizador::pasarAMinuscSinAcentos (const string& str) const{
-//     string resultado;
-//     resultado.reserve(str.size());
-
-//     for (unsigned char ch : str) {
-//         // Pasar a minúsculas
-//         if (ch >= 'A' && ch <= 'Z') {
-//             resultado.push_back(static_cast<char>(ch + ('a' - 'A')));
-//             continue;
-//         }
-
-//         switch (ch) {
-//             // a / A con acentos y variantes (ÀÁÂÃÄÅ àáâãäå)
-//             case 0xC0: case 0xC1: case 0xC2: case 0xC3: case 0xC4: case 0xC5:
-//             case 0xE0: case 0xE1: case 0xE2: case 0xE3: case 0xE4: case 0xE5:
-//                 resultado.push_back('a');
-//                 break;
-
-//             // e / E (ÈÉÊË èéêë)
-//             case 0xC8: case 0xC9: case 0xCA: case 0xCB:
-//             case 0xE8: case 0xE9: case 0xEA: case 0xEB:
-//                 resultado.push_back('e');
-//                 break;
-
-//             // i / I (ÌÍÎÏ ìíîï)
-//             case 0xCC: case 0xCD: case 0xCE: case 0xCF:
-//             case 0xEC: case 0xED: case 0xEE: case 0xEF:
-//                 resultado.push_back('i');
-//                 break;
-
-//             // o / O (ÒÓÔÕÖ òóôõö)
-//             case 0xD2: case 0xD3: case 0xD4: case 0xD5: case 0xD6:
-//             case 0xF2: case 0xF3: case 0xF4: case 0xF5: case 0xF6:
-//                 resultado.push_back('o');
-//                 break;
-
-//             // u / U (ÙÚÛÜ ùúûü)
-//             case 0xD9: case 0xDA: case 0xDB: case 0xDC:
-//             case 0xF9: case 0xFA: case 0xFB: case 0xFC:
-//                 resultado.push_back('u');
-//                 break;
-
-//             // y / Y (Ý ý ÿ)
-//             case 0xDD: case 0xFD: case 0xFF:
-//                 resultado.push_back('y');
-//                 break;
-
-//             // ñ / Ñ
-//             case 0xD1: case 0xF1:
-//                 resultado.push_back('ñ');
-//                 break;
-
-//             // ç / Ç
-//             case 0xC7: case 0xE7:
-//                 resultado.push_back('c');
-//                 break;
-
-//             // Ð / ð (eth) -> d
-//             case 0xD0: case 0xF0:
-//                 resultado.push_back('d');
-//                 break;
-
-//             // Ø / ø -> o
-//             case 0xD8: case 0xF8:
-//                 resultado.push_back('o');
-//                 break;
-
-//             default:
-//                 resultado.push_back(static_cast<char>(ch));
-//                 break;
-//         }
-//     }
-
-//     return resultado;
-// }
 string Tokenizador::pasarAMinuscSinAcentos(const string& str) const {
     static const array<unsigned char, 256> map = []() {
         array<unsigned char, 256> m{};
-        
-        for (int i = 0; i < 256; ++i)
-            m[i] = static_cast<unsigned char>(i);
+        for (int i = 0; i < 256; ++i) m[i] = static_cast<unsigned char>(i);
+        for (unsigned char c = 'A'; c <= 'Z'; ++c) m[c] = c + ('a' - 'A');
 
-        for (unsigned char c = 'A'; c <= 'Z'; ++c)
-            m[c] = c + ('a' - 'A');
-
-        unsigned char a_vals[] = {
-            0xC0,0xC1,0xC2,0xC3,0xC4,0xC5,
-            0xE0,0xE1,0xE2,0xE3,0xE4,0xE5
-        };
+        unsigned char a_vals[] = {0xC0,0xC1,0xC2,0xC3,0xC4,0xC5,0xE0,0xE1,0xE2,0xE3,0xE4,0xE5};
         for (auto c : a_vals) m[c] = 'a';
-
-        unsigned char e_vals[] = {
-            0xC8,0xC9,0xCA,0xCB,
-            0xE8,0xE9,0xEA,0xEB
-        };
+        unsigned char e_vals[] = {0xC8,0xC9,0xCA,0xCB,0xE8,0xE9,0xEA,0xEB};
         for (auto c : e_vals) m[c] = 'e';
-
-        unsigned char i_vals[] = {
-            0xCC,0xCD,0xCE,0xCF,
-            0xEC,0xED,0xEE,0xEF
-        };
+        unsigned char i_vals[] = {0xCC,0xCD,0xCE,0xCF,0xEC,0xED,0xEE,0xEF};
         for (auto c : i_vals) m[c] = 'i';
-
-        unsigned char o_vals[] = {
-            0xD2,0xD3,0xD4,0xD5,0xD6,
-            0xF2,0xF3,0xF4,0xF5,0xF6
-        };
+        unsigned char o_vals[] = {0xD2,0xD3,0xD4,0xD5,0xD6,0xF2,0xF3,0xF4,0xF5,0xF6};
         for (auto c : o_vals) m[c] = 'o';
-
-        unsigned char u_vals[] = {
-            0xD9,0xDA,0xDB,0xDC,
-            0xF9,0xFA,0xFB,0xFC
-        };
+        unsigned char u_vals[] = {0xD9,0xDA,0xDB,0xDC,0xF9,0xFA,0xFB,0xFC};
         for (auto c : u_vals) m[c] = 'u';
 
-        m[0xDD] = 'y';
-        m[0xFD] = 'y';
-        m[0xFF] = 'y';
-
-        m[0xD1] = 0xF1;
-        m[0xF1] = 0xF1;
-
-        m[0xC7] = 'c';
-        m[0xE7] = 'c';
-
-        m[0xD0] = 'd';
-        m[0xF0] = 'd';
-
-        m[0xD8] = 'o';
-        m[0xF8] = 'o';
-
+        m[0xDD] = 'y'; m[0xFD] = 'y'; m[0xFF] = 'y';
+        m[0xD1] = 0xF1; m[0xF1] = 0xF1;   // ñ
+        m[0xC7] = 'c'; m[0xE7] = 'c';     // ç
+        m[0xD0] = 'd'; m[0xF0] = 'd';     // eth
+        m[0xD8] = 'o'; m[0xF8] = 'o';     // ø
         return m;
     }();
 
     string resultado;
-    resultado.reserve(str.size());
+    const size_t n = str.size();
+    resultado.resize(n);
 
-    for (unsigned char ch : str) {
-        resultado.push_back(static_cast<char>(map[ch]));
+    const unsigned char* src = reinterpret_cast<const unsigned char*>(str.data());
+    unsigned char* dst = reinterpret_cast<unsigned char*>(&resultado[0]);
+
+    size_t i = 0;
+
+    // Desenrollado x8
+    for (; i + 7 < n; i += 8) {
+        dst[i + 0] = map[src[i + 0]];
+        dst[i + 1] = map[src[i + 1]];
+        dst[i + 2] = map[src[i + 2]];
+        dst[i + 3] = map[src[i + 3]];
+        dst[i + 4] = map[src[i + 4]];
+        dst[i + 5] = map[src[i + 5]];
+        dst[i + 6] = map[src[i + 6]];
+        dst[i + 7] = map[src[i + 7]];
+    }
+
+    // Resto
+    for (; i < n; ++i) {
+        dst[i] = map[src[i]];
     }
 
     return resultado;
@@ -203,7 +112,6 @@ void Tokenizador::reconstruirTablasAuxiliares() {
 
 // URLs 
 bool Tokenizador::esDelimitadorCortadorURL (const char& c) const {
-    // string caracteresPermitidosURL = "-_.:/?&=#@";
     unsigned char uc = static_cast<unsigned char>(c);
     static const array<bool, 256> permitidosURLArray = []() {
         array<bool, 256> arr{};
@@ -215,10 +123,7 @@ bool Tokenizador::esDelimitadorCortadorURL (const char& c) const {
         return arr;
     }();
     
-    if (esDelimitador(c) && !permitidosURLArray[uc]) {
-        return true;
-    }
-    return false;
+    return esDelimitador(c) && !permitidosURLArray[uc];
 }
 bool Tokenizador::esURL (const string& s, size_t start, size_t end) const {
     size_t posicionDespuesPrefijo = 0;
@@ -252,11 +157,7 @@ size_t Tokenizador::procesarURL (const string& s, size_t start, size_t end, list
     while (i < s.size() && !esDelimitadorCortadorURL(s[i])) {
         ++i;
     }
-    
-    // string token = s.substr(start, i - start);
-    // if (!token.empty()) {
-    //     tokens.push_back(token);
-    // }
+
     size_t longitudToken = i - start;
     if (longitudToken > 0) {
         string token;
@@ -328,18 +229,6 @@ size_t Tokenizador::procesarNumeroDecimal (const string& s, size_t start, size_t
         }
     }
 
-    // string token = "";
-
-    // cout << "Procesando número decimal desde posición " << start << " con punto/coma en posición " << end << "\n";
-    // cout << "Caracter antes del número: '" << (start > 0 ? s[start - 1] : ' ') << "'" << "\n";
-    // if (i > 0) {
-    //     if (s[i - 1] == '.'){
-    //         token += "0.";
-    //     } else if (s[i - 1] == ',') {
-    //         token += "0,";
-    //     }
-    // }
-
     char ultimoCaracter = '\0';
     while (i < s.size()) {
         char c = s[i];
@@ -391,11 +280,6 @@ size_t Tokenizador::procesarNumeroDecimal (const string& s, size_t start, size_t
     if (!token.empty()) {
         tokens.push_back(move(token));
     }
-    
-    // token += s.substr(start, i - start); 
-    // if (!token.empty()) {
-    //     tokens.push_back(token);
-    // }
     
     return i;
 }
@@ -459,10 +343,6 @@ size_t Tokenizador::procesarEmail (const string& s, size_t start, size_t end, li
         }
         ++i;
     }
-    // string token = s.substr(start, i - start);
-    // if (!token.empty()) {
-    //     tokens.push_back(token);
-    // }
 
     size_t longitudToken = i - start;
     if (longitudToken > 0) {
@@ -533,11 +413,6 @@ size_t Tokenizador::procesarAcronimo (const string& s, size_t start, size_t end,
         finToken--;
     }
 
-    // string token = s.substr(inicioToken, finToken - inicioToken);
-    // if (!token.empty()) {
-    //     tokens.push_back(token);
-    // }
-
     size_t longitudToken = finToken - inicioToken;
     if (longitudToken > 0) {
         string token;
@@ -587,10 +462,6 @@ size_t Tokenizador::procesarGuionMultipalabra (const string& s, size_t start, si
         }
         ++i;
     }
-    // string token = s.substr(start, i - start);
-    // if (!token.empty()) {
-    //     tokens.push_back(token);
-    // }
 
     size_t longitudToken = i - start;
     if (longitudToken > 0) {
@@ -622,7 +493,6 @@ Tokenizador::Tokenizador (const Tokenizador& t) {
 
 Tokenizador::Tokenizador(){
     delimiters=",;:.-/+*\\ '\"{}[]()<>?!??&#=\t@";
-    //_:/.?&-=#@
     casosEspeciales = true;
     pasarAminuscSinAcentos = false;
     reconstruirTablaDelimitadores();
@@ -647,19 +517,26 @@ Tokenizador& Tokenizador::operator= (const Tokenizador& t){
 void Tokenizador::Tokenizar (const string& str, list<string>& tokens) const {
     tokens.clear();
 
-    // string s = str;
-    // if (pasarAminuscSinAcentos) {
-    //     s = pasarAMinuscSinAcentos(str);
-    // }
-    const string* ps = &str;   // Por defecto trabajamos sobre str (sin copia)
-    string sConvertida;        // Solo se usará si hay que convertir
+    const string* ps = &str;
+    string sConvertida;
     
     if (pasarAminuscSinAcentos) {
         sConvertida = pasarAMinuscSinAcentos(str);
         ps = &sConvertida;
     }
     
-    const string& s = *ps;     // s es referencia al string correcto
+    const string& s = *ps;
+
+    const unsigned char* data = reinterpret_cast<const unsigned char*>(s.data());
+    const size_t n = s.size();
+    const auto& delimArr = esDelimitadorArray;
+    const auto& spaceArr = esSpaceArray;
+
+    auto esDelimFast = [&](unsigned char c) -> bool {
+        if (spaceArr[c]) return true;
+        if (c == '\n' || c == '\r') return true;
+        return delimArr[c];
+    };
 
     if (!casosEspeciales) {
         // Si no se tratan casos especiales, se tokeniza de forma simple
@@ -674,15 +551,14 @@ void Tokenizador::Tokenizar (const string& str, list<string>& tokens) const {
         }
         return;
     } else {
-        
-        for (size_t i = 0; i < s.size(); ) {
-            if (esDelimitador(s[i])) {
+        for (size_t i = 0; i < n; ) {
+            if (esDelimFast(data[i])) {
                 ++i;
                 continue;
             }
             size_t start = i;
             if (i > 0 && (s[i - 1] == '.' || s[i - 1] == ',')) {
-                if (i > 1 && (s[i - 2] == '.' || s[i - 2] == ',' || !esSpaceArray[static_cast<unsigned char>(s[i - 2])])) {
+                if (i > 1 && (s[i - 2] == '.' || s[i - 2] == ',')) {
                     // No es un número decimal si hay dos puntos/comas seguidos
                 } else {
                     if (esNumeroDecimal(s, start, i)) {
@@ -693,49 +569,17 @@ void Tokenizador::Tokenizar (const string& str, list<string>& tokens) const {
             }
 
             bool casoEspecialEncontrado = false;
-            
-            // while (i <= s.size()) {
 
-            //     if (i < s.size() && !esDelimitador(s[i])) {
-            //         ++i;
-            //         continue;
-            //     }
-
-                // if (esURL(s, start, i)) {
-                //     // cout << "Detectada URL en posición " << start << ": " << s.substr(start, i - start) << "\n" << "\n";
-                //     i = procesarURL(s, start, i, tokens);
-                //     casoEspecialEncontrado = true;
-                // }
-                // else if (esNumeroDecimal(s, start, i)) {
-                //     // cout << "Detectado número decimal en posición " << start << ": " << s.substr(start, i - start) << "\n" << "\n";
-                //     i = procesarNumeroDecimal(s, start, i, tokens);
-                //     casoEspecialEncontrado = true;
-                // }
-                // else if (esEmail(s, start, i)) {
-                //     // cout << "Detectado email en posición " << start << ": " << s.substr(start, i - start) << "\n" << "\n";
-                //     i = procesarEmail(s, start, i, tokens);
-                //     casoEspecialEncontrado = true;
-                // }
-                // else if (esAcronimo(s, start, i)) {
-                //     // cout << "Detectado acrónimo en posición " << start << ": " << s.substr(start, i - start) << "\n" << "\n";
-                //     i = procesarAcronimo(s, start, i, tokens);
-                //     casoEspecialEncontrado = true;
-                // }
-                // else if (esGuionMultipalabra(s, start, i)) {
-                //     // cout << "Detectada palabra con guion en posición " << start << ": " << s.substr(start, i - start) << "\n" << "\n";
-                //     i = procesarGuionMultipalabra(s, start, i, tokens);
-                //     casoEspecialEncontrado = true;
-                // }
-            while (i < s.size() && !esDelimitador(s[i])) {
+            while (i < n && !esDelimFast(data[i])) {
                 ++i;
             }
-            if (i == s.size()) {
+            if (i == n) {
                 if (i > start) {
                     tokens.emplace_back(s.data() + start, i - start);
                 }
                 break;
             }
-            unsigned char d = static_cast<unsigned char>(s[i]);
+            unsigned char d = data[i];
             switch (d) {
                 case '@':
                     if (esEmail(s, start, i)) {
@@ -785,10 +629,7 @@ void Tokenizador::Tokenizar (const string& str, list<string>& tokens) const {
                     }
                     break;
             }
-                
-                // break;
-            // }
-
+            
             if (!casoEspecialEncontrado) {
                 if (i > start) {
                     tokens.emplace_back(s.data() + start, i - start);
@@ -799,7 +640,6 @@ void Tokenizador::Tokenizar (const string& str, list<string>& tokens) const {
     }
 }
 
-// Lea un buffer de tamaño addecuado
 bool Tokenizador::Tokenizar (const string& i, const string& f) const {
     ifstream entrada(i.c_str(), ios::binary);
     if (!entrada) { 
@@ -830,8 +670,6 @@ bool Tokenizador::Tokenizar (const string& i) const {
     return Tokenizar(i, i + ".tk");
 }
 
-
-// Modificar para que trate el fichero de texto como binario y que lea de un buffer de tamaño adecuado
 bool Tokenizador::TokenizarListaFicheros (const string& i) const {
     ifstream entrada(i.c_str(), ios::binary);
     string nombreFichero;
@@ -848,38 +686,6 @@ bool Tokenizador::TokenizarListaFicheros (const string& i) const {
     carry.reserve(buffer.size() * 2);
 
     // Funcion lambda para procesar cada línea
-    // [&] -> Permite modificar la variable exito del ámbito externo
-    // auto procesarLinea = [&](string& nombreFichero) {
-    //     // cout << "Procesando fichero: " << nombreFichero << "\n";
-    //     if (nombreFichero.empty()) {
-    //         return;
-    //     }
-
-    //     if(!nombreFichero.empty() && nombreFichero.back() == '\r') {
-    //         nombreFichero.pop_back();
-    //         if (nombreFichero.empty()) {
-    //             return;
-    //         }
-    //     }
-
-    //     struct stat info;
-    //     // int stat(const char *pathname, struct stat *buf); -> Guarda en buf la informaci?n del archivo con ruta pathname. Devuelve 0 si tiene ?xito y -1 si hay error.
-    //     int err = stat(nombreFichero.c_str(), &info);
-
-    //     if (err == -1) {
-    //         cerr << "ERROR: No existe el archivo: " << nombreFichero << "\n";
-    //         exito = false; 
-    //     }
-    //     else if (S_ISDIR(info.st_mode)) {
-    //         cerr << "ERROR: Es un directorio: " << nombreFichero << "\n";
-    //         exito = false; 
-    //     }
-    //     else {
-    //         if (!Tokenizar(nombreFichero)) {
-    //             exito = false; 
-    //         }
-    //     }
-    // };
     auto procesarLinea = [&](string_view sv) {
         if (sv.empty()) return;
         
@@ -889,7 +695,7 @@ bool Tokenizador::TokenizarListaFicheros (const string& i) const {
             if (sv.empty()) return;
         }
 
-        std::string nombreFichero(sv);
+        string nombreFichero(sv);
     
         struct stat info;
         int err = stat(nombreFichero.c_str(), &info);
@@ -926,50 +732,20 @@ bool Tokenizador::TokenizarListaFicheros (const string& i) const {
                 break;
             }
 
-            // string nombreFichero = carry.substr(start, pos - start);
-            // procesarLinea(nombreFichero);
-            // start = pos + 1;
             string_view sv(carry.data() + start, pos - start);
             procesarLinea(sv);
             start = pos + 1;
         }
     }
 
-    // if (!carry.empty()) {
-    //     procesarLinea(carry);
-    // }
     if (!carry.empty()) {
         string_view sv(carry);
         procesarLinea(sv);
     }
 
-    // while(getline(entrada, nombreFichero)) {
-    //     if (nombreFichero.empty()) {
-    //         continue;
-    //     }
-    //     struct stat info;
-    //     // int stat(const char *pathname, struct stat *buf); -> Guarda en buf la informaci?n del archivo con ruta pathname. Devuelve 0 si tiene ?xito y -1 si hay error.
-    //     int err = stat(nombreFichero.c_str(), &info);
-
-    //     if (err == -1) {
-    //         cerr << "ERROR: No existe el archivo: " << nombreFichero << "\n";
-    //         exito = false; 
-    //     }
-    //     else if (S_ISDIR(info.st_mode)) {
-    //         cerr << "ERROR: Es un directorio: " << nombreFichero << "\n";
-    //         exito = false; 
-    //     }
-    //     else {
-    //         if (!Tokenizar(nombreFichero)) {
-    //             exito = false; 
-    //         }
-    //     }
-    // }
-
     entrada.close();
     return exito;
 }
-
 
 bool Tokenizador::TokenizarDirectorio (const string& i) const {
     struct stat dir;

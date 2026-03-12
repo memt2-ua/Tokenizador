@@ -775,7 +775,7 @@ velocidad
 de
 perfusion
 ~0
-15
+0,15
 mg
 min
 10
@@ -2316,7 +2316,7 @@ intencion
 de
 tratamiento
 p=0
-0577
+0,0577
 reduccion
 del
 riesgo
@@ -2327,7 +2327,7 @@ poblacion
 por
 protocolo
 p=0
-0341
+0,0341
 este
 resultado
 fue
@@ -4679,7 +4679,7 @@ velocidad
 de
 perfusion
 ~0
-15
+0,15
 mg
 10
 mg
@@ -6214,7 +6214,7 @@ intencion
 de
 tratamiento
 p=0
-0577
+0,0577
 reduccion
 del
 riesgo
@@ -6225,7 +6225,7 @@ poblacion
 por
 protocolo
 p=0
-0341
+0,0341
 este
 resultado
 fue

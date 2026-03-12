@@ -2111,7 +2111,7 @@ comentarios
 del
 cuidador
 p=0
-025
+0,025
 adcs-adlsev
 siglas
 en
@@ -2133,7 +2133,7 @@ la
 vida
 diaria
 p=0
-003
+0,003
 sib
 siglas
 en
@@ -2147,7 +2147,7 @@ de
 deterioro
 grave
 p=0
-002
+0,002
 un
 estudio
 pivotal
@@ -2217,11 +2217,11 @@ de
 alzheimer-subescala
 cognitiva
 p=0
-003
+0,003
 y
 cibic-plus
 p=0
-004
+0,004
 en
 la
 semana
@@ -2558,7 +2558,8 @@ y
 6-hidroxi-memantina
 y
 1-nitroso-3
-5-dimetil
+0,5
+dimetil
 adamantano
 ninguno
 de
@@ -5321,7 +5322,7 @@ comentarios
 del
 cuidador
 p=0
-025
+0,025
 adcs-adlsev
 siglas
 en
@@ -5343,7 +5344,7 @@ la
 vida
 diaria
 p=0
-003
+0,003
 sib
 siglas
 en
@@ -5357,7 +5358,7 @@ de
 deterioro
 grave
 p=0
-002
+0,002
 un
 estudio
 pivotal
@@ -5427,11 +5428,11 @@ de
 alzheimer-subescala
 cognitiva
 p=0
-003
+0,003
 y
 cibic-plus
 p=0
-004
+0,004
 en
 la
 semana
@@ -5768,7 +5769,8 @@ y
 6-hidroxi-memantina
 y
 1-nitroso-3
-5-dimetil
+0,5
+dimetil
 adamantano
 ninguno
 de
@@ -8726,7 +8728,7 @@ comentarios
 del
 cuidador
 p=0
-025
+0,025
 adcs-adlsev
 siglas
 en
@@ -8748,7 +8750,7 @@ la
 vida
 diaria
 p=0
-003
+0,003
 sib
 siglas
 en
@@ -8762,7 +8764,7 @@ de
 deterioro
 grave
 p=0
-002
+0,002
 un
 estudio
 pivotal
@@ -8832,11 +8834,11 @@ de
 alzheimer-subescala
 cognitiva
 p=0
-003
+0,003
 y
 cibic-plus
 p=0
-004
+0,004
 en
 la
 semana
@@ -9172,7 +9174,8 @@ y
 6-hidroxi-memantina
 y
 1-nitroso-3
-5-dimetil
+0,5
+dimetil
 adamantano
 ninguno
 de
